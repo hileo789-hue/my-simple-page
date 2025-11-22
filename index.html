@@ -63,7 +63,7 @@
         .btn-add-row { background: #2ecc71; color: #fff; border: none; width: 24px; height: 24px; border-radius: 4px; font-size: 16px; line-height: 24px; cursor: pointer; display: flex; justify-content: center; align-items: center; }
         .btn-del-row { color: #e74c3c; background: none; border: none; font-size: 13px; text-decoration: underline; cursor: pointer; }
 
-        /* --- 甘特圖主結構 (完美對齊版) --- */
+        /* --- 甘特圖主結構 --- */
         .gantt-wrapper {
             display: flex; border: 1px solid #dcdcdc; background: #fff;
             height: 70vh; overflow: hidden; position: relative;
@@ -85,7 +85,7 @@
             background: #fff;
         }
 
-        /* 統一表頭區域 (Header) */
+        /* 統一表頭區域 */
         .gantt-header-container {
             flex: 0 0 50px; /* 固定高度 */
             background-color: #f8f9fa;
@@ -93,7 +93,7 @@
             overflow: hidden;
         }
 
-        /* 統一內容區域 (Body) */
+        /* 統一內容區域 */
         .gantt-body-container {
             flex: 1;
             overflow: hidden; /* 左側隱藏捲軸，右側開啟 */
@@ -102,14 +102,8 @@
         }
         #chartBody { overflow: auto; }
 
-        /* 左上標題內容 */
-        .left-header-content {
-            display: flex; height: 100%; align-items: center; font-weight: bold; color: #555;
-        }
-        /* 右上時間軸容器 */
-        .timeline-header {
-            display: flex; height: 100%; align-items: center; min-width: max-content;
-        }
+        .left-header-content { display: flex; height: 100%; align-items: center; font-weight: bold; color: #555; }
+        .timeline-header { display: flex; height: 100%; align-items: center; min-width: max-content; }
         
         /* 統一列 (Row) 樣式 */
         .gantt-row {
@@ -124,7 +118,6 @@
         }
         .row-hover { background-color: #f0f8ff !important; }
 
-        /* 左側 Cell */
         .cell-name { flex: 1; padding-right: 10px; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; cursor: pointer; user-select: none; }
         .cell-owner { width: 70px; text-align: center; font-size: 12px; border-left: 1px solid #eee; color: #666; flex-shrink: 0; height: 100%; display: flex; align-items: center; justify-content: center;}
         .toggle-btn { width: 20px; text-align: center; margin-right: 5px; color: #777; font-family: monospace;}
@@ -132,12 +125,11 @@
         .row-group-1 { background-color: #eef2f7; font-weight: bold; color: #2c3e50; }
         .row-group-2 { background-color: #fdfdfd; font-weight: 600; color: #555; }
 
-        /* 右側時間軸 Cell */
         .time-cell { flex-shrink: 0; border-right: 1px solid #e8e8e8; font-size: 11px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #777; height: 100%; box-sizing: border-box; }
         .weekend { background-color: #fff0f0; color: #d00; }
         
         /* 右側背景與 Bar */
-        .bars-container { position: relative; min-width: max-content; height: 100%; }
+        .bars-container { position: relative; min-width: max-content; /* height 由 JS 動態設定 */ }
         .timeline-bg { position: absolute; top: 0; left: 0; height: 100%; width: 100%; z-index: 0; pointer-events: none; }
         .today-line { position: absolute; top: 0; bottom: 0; width: 2px; background-color: #ff4757; z-index: 25; pointer-events: none; }
 
@@ -212,19 +204,17 @@
 
     <div id="loading" class="loading">正在讀取並計算排程...</div>
 
-    <!-- 甘特圖主結構 (雙面板分離) -->
+    <!-- 甘特圖主結構 -->
     <div class="gantt-wrapper" id="ganttApp" style="display:none;">
         
         <!-- 左側面板 -->
         <div class="panel-left">
-            <!-- 左上：WBS標題 -->
             <div class="gantt-header-container">
                 <div class="left-header-content">
                     <div class="cell-name" style="justify-content:center; padding-left:20px;">任務 WBS</div>
                     <div class="cell-owner">負責人</div>
                 </div>
             </div>
-            <!-- 左下：WBS列表 -->
             <div class="gantt-body-container" id="leftBody">
                 <div id="taskListContent"></div>
             </div>
@@ -232,11 +222,9 @@
 
         <!-- 右側面板 -->
         <div class="panel-right">
-            <!-- 右上：日期軸 -->
             <div class="gantt-header-container" id="rightHeader">
                 <div class="timeline-header" id="timelineHeader"></div>
             </div>
-            <!-- 右下：甘特條 -->
             <div class="gantt-body-container" id="chartBody">
                 <div class="bars-container" id="barsContainer">
                     <div class="timeline-bg" id="timelineBg"></div>
@@ -287,10 +275,8 @@
     <div id="customTooltip"></div>
 
 <script>
-    // ** 修正後的 CSV 連結 **
     const SHEET_TASKS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQMt2b5Lb70ThslYptMoDFsgcB5lTTo7GwPnx18MuZ1xo5vZUqK1705TfFM6vhC-ZHJc6JbIaLgJz01/pub?gid=1959210146&single=true&output=csv";
 
-    // --- 全域設定 ---
     let VIEW_MODE = 'Day';
     const PIXELS_PER_DAY = { 'Day': 30, 'Week': 7, 'Month': 2 };
 
@@ -349,11 +335,13 @@
         const headers = lines[0].split(',').map(h => h.trim());
         const result = [];
         for (let i = 1; i < lines.length; i++) {
-            // 簡易處理CSV (假設無引號逗號)
             let row = lines[i].split(','); 
             const obj = {};
             headers.forEach((h, idx) => obj[h] = row[idx] ? row[idx].trim() : "");
-            if(obj[headers[0]]) result.push(obj);
+            // 增加空白列過濾機制
+            if(obj[headers[0]] && obj[headers[0]].trim() !== "") {
+                result.push(obj);
+            }
         }
         return result;
     }
@@ -503,7 +491,9 @@
             updateTime(cat2Node, task); updateTime(cat1Node, task);
         });
 
-        taskListEl.innerHTML = ''; headerEl.innerHTML = ''; barsContainerEl.innerHTML = ''; barsContainerEl.appendChild(bgEl);
+        // 清空
+        taskListEl.innerHTML = ''; headerEl.innerHTML = ''; barsContainerEl.innerHTML = ''; 
+        barsContainerEl.appendChild(bgEl); // 重建背景層
 
         const pxPerDay = PIXELS_PER_DAY[VIEW_MODE];
         let renderStart = new Date(GLOBAL_START); renderStart.setDate(renderStart.getDate() - 7);
@@ -514,7 +504,7 @@
         const totalWidth = totalDays * pxPerDay;
         barsContainerEl.style.width = `${totalWidth}px`; bgEl.style.width = `${totalWidth}px`;
 
-        // Render Timeline Header
+        // --- 渲染表頭 (Timeline Header) ---
         if (VIEW_MODE === 'Day') {
             bgEl.style.backgroundSize = `${pxPerDay}px 100%`; bgEl.style.backgroundImage = `linear-gradient(90deg, transparent ${pxPerDay-1}px, #eee ${pxPerDay}px)`;
             let curr = new Date(renderStart);
@@ -551,30 +541,50 @@
         const today = new Date(); const todayDiff = (today - renderStart) / (1000*60*60*24);
         if (todayDiff >= 0) { const line = document.createElement('div'); line.className = 'today-line'; line.style.left = `${todayDiff * pxPerDay}px`; barsContainerEl.appendChild(line); }
 
-        // Render Rows
-        let rowIndex = 0;
-        function renderNode(node) {
-            const isCollapsed = COLLAPSED_STATE.has(node.id);
-            const rowId = `row-${rowIndex++}`;
-            
+        // --- 預先計算需要渲染的節點列表 (Flat List) 以便計算總高度 ---
+        let visibleNodes = [];
+        function flattenTree(nodes) {
+            nodes.forEach(node => {
+                visibleNodes.push(node);
+                const isCollapsed = COLLAPSED_STATE.has(node.id);
+                if (node.type && !isCollapsed) {
+                    flattenTree(node.children);
+                }
+            });
+        }
+        flattenTree(tree);
+
+        // **關鍵修正：強制設定高度，撐開紅線與背景**
+        const totalRowHeight = visibleNodes.length * 36; // 36px per row
+        barsContainerEl.style.height = `${Math.max(totalRowHeight, 500)}px`; // 至少500px避免太醜
+        bgEl.style.height = '100%'; // 背景線跟隨容器
+
+        // --- 開始渲染列 ---
+        visibleNodes.forEach((node, rowIndex) => {
+            // 左側 Row
             const leftRow = document.createElement('div');
             leftRow.className = `gantt-row ${node.type==='cat1'?'row-group-1':node.type==='cat2'?'row-group-2':''}`;
             let indent = node.type === 'cat1' ? 10 : node.type === 'cat2' ? 30 : 50;
             if (node.type) {
-                const icon = isCollapsed ? '▶' : '▼';
+                const icon = COLLAPSED_STATE.has(node.id) ? '▶' : '▼';
                 leftRow.innerHTML = `<div class="cell-name" style="padding-left:${indent}px" onclick="toggleGroup('${node.id}')"><span class="toggle-btn">${icon}</span> ${node.name} <span style="font-size:11px; color:#888; margin-left:5px;">(${node.children.length})</span></div>`;
             } else {
                 leftRow.innerHTML = `<div class="cell-name" style="padding-left:${indent}px">${node['任務名稱']}</div><div class="cell-owner">${node['人員姓名']}</div>`;
             }
             taskListEl.appendChild(leftRow);
 
-            const rightRow = document.createElement('div'); rightRow.className = 'gantt-row'; rightRow.style.width = `${totalWidth}px`;
+            // 右側 Row
+            const rightRow = document.createElement('div'); 
+            rightRow.className = 'gantt-row'; 
+            rightRow.style.width = `${totalWidth}px`;
+
             const barLeft = ((node._start - renderStart) / 86400000) * pxPerDay;
             const barWidth = Math.max(((node._end - node._start) / 86400000 + 1) * pxPerDay, 2);
 
             if (node.type) {
                 const bar = document.createElement('div'); bar.className = 'summary-bar'; bar.style.left = `${barLeft}px`; bar.style.width = `${barWidth}px`;
-                bar.addEventListener('mousemove', (e)=>showTooltip(e, node)); bar.addEventListener('mouseleave', hideTooltip); rightRow.appendChild(bar);
+                bar.addEventListener('mousemove', (e)=>showTooltip(e, node)); bar.addEventListener('mouseleave', hideTooltip); 
+                rightRow.appendChild(bar);
             } else {
                 const bar = document.createElement('div'); bar.className = `gantt-bar diff-${node['難易度']}`; bar.style.left = `${barLeft}px`; bar.style.width = `${barWidth}px`;
                 if (barWidth > 40 && VIEW_MODE !== 'Month') bar.innerText = `${node._start.getMonth()+1}/${node._start.getDate()}`;
@@ -583,13 +593,11 @@
             }
             barsContainerEl.appendChild(rightRow);
 
+            // Hover Sync
             const syncHover = (add) => { const action = add?'add':'remove'; leftRow.classList[action]('row-hover'); rightRow.classList[action]('row-hover'); };
             leftRow.addEventListener('mouseenter', ()=>syncHover(true)); leftRow.addEventListener('mouseleave', ()=>syncHover(false));
             rightRow.addEventListener('mouseenter', ()=>syncHover(true)); rightRow.addEventListener('mouseleave', ()=>syncHover(false));
-
-            if (node.type && !isCollapsed) node.children.forEach(child => renderNode(child));
-        }
-        tree.forEach(node => renderNode(node));
+        });
         
         document.getElementById('loading').style.display = 'none'; document.getElementById('ganttApp').style.display = 'flex';
         

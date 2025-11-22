@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>專案管理甘特圖</title>
+    <title>專案管理甘特圖 V3 (穩定修正版)</title>
     <style>
         /* --- 基礎設定 --- */
         body { font-family: "Segoe UI", "Microsoft JhengHei", sans-serif; margin: 20px; background-color: #f5f7fa; color: #333; }
@@ -21,6 +21,7 @@
         }
         .btn-primary { background-color: #3498db; color: #fff; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold; transition: 0.2s; }
         .btn-primary:hover { background-color: #2980b9; }
+        .btn-danger { background-color: #e74c3c; color: #fff; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold; margin-left: 10px; }
         
         /* 視圖切換 */
         .view-switcher { display: flex; background: #e0e0e0; border-radius: 4px; padding: 2px; margin-right: 10px; }
@@ -37,24 +38,14 @@
         .filter-label { font-size: 11px; font-weight: bold; color: #555; }
 
         /* --- Modal (設定視窗) --- */
-        .modal-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: flex-start;
-            padding-top: 50px;
-        }
-        .modal-content {
-            background: #fff; width: 750px; 
-            border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            display: flex; flex-direction: column; max-height: 85vh;
-        }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: flex-start; padding-top: 50px; }
+        .modal-content { background: #fff; width: 750px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); display: flex; flex-direction: column; max-height: 85vh; }
         .modal-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
         .modal-title { font-size: 18px; font-weight: bold; color: #2c3e50; }
         .modal-body { padding: 0; overflow-y: auto; flex: 1; background: #fafafa; display: flex; flex-direction: column;}
         .modal-footer { padding: 15px 20px; border-top: 1px solid #eee; text-align: right; background: #fff; border-radius: 0 0 8px 8px; }
-
         .section-title { padding: 10px 20px; background: #eef2f7; color: #2c3e50; font-weight: bold; font-size: 14px; border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; }
         .section-title:first-child { border-top: none; }
-        
         .cap-table { width: 100%; border-collapse: collapse; background: #fff; }
         .cap-table th { background: #f8f9fa; padding: 8px 15px; text-align: left; font-size: 13px; font-weight: bold; color: #555; border-bottom: 1px solid #ddd; }
         .cap-table td { padding: 8px 15px; border-bottom: 1px solid #eee; font-size: 13px; vertical-align: middle; }
@@ -70,51 +61,39 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.08); border-radius: 4px;
         }
 
-        /* 左側面板容器 */
+        /* 左側面板 */
         .panel-left {
-            flex: 0 0 380px;
-            display: flex; flex-direction: column;
-            border-right: 1px solid #e0e0e0;
-            z-index: 20; background: #fff;
+            flex: 0 0 380px; display: flex; flex-direction: column;
+            border-right: 1px solid #e0e0e0; z-index: 20; background: #fff;
         }
-        /* 右側面板容器 */
+        /* 右側面板 */
         .panel-right {
-            flex: 1;
-            display: flex; flex-direction: column;
-            overflow: hidden; 
-            background: #fff;
+            flex: 1; display: flex; flex-direction: column;
+            overflow: hidden; background: #fff;
         }
 
-        /* 統一表頭區域 */
-        .gantt-header-container {
-            flex: 0 0 50px; /* 固定高度 */
-            background-color: #f8f9fa;
-            border-bottom: 1px solid #ccc;
-            overflow: hidden;
-        }
-
-        /* 統一內容區域 */
-        .gantt-body-container {
-            flex: 1;
-            overflow: hidden; /* 左側隱藏捲軸，右側開啟 */
-            position: relative;
-            background-color: #fff;
-        }
+        /* Header */
+        .gantt-header-container { flex: 0 0 50px; background-color: #f8f9fa; border-bottom: 1px solid #ccc; overflow: hidden; }
+        
+        /* Body 捲動區 */
+        .gantt-body-container { flex: 1; overflow: hidden; position: relative; background-color: #fff; }
         #chartBody { overflow: auto; }
 
         .left-header-content { display: flex; height: 100%; align-items: center; font-weight: bold; color: #555; }
         .timeline-header { display: flex; height: 100%; align-items: center; min-width: max-content; }
         
-        /* 統一列 (Row) 樣式 */
+        /* --- 關鍵修正：列樣式 --- */
         .gantt-row {
             display: flex;
-            height: 36px; 
+            height: 36px; /* 強制高度 */
             min-height: 36px;
             max-height: 36px;
             border-bottom: 1px solid #f0f0f0;
             align-items: center;
             box-sizing: border-box;
             width: 100%;
+            position: relative; /* 關鍵：絕對定位的參考點 */
+            flex-shrink: 0; /* 關鍵：防止被壓縮 */
         }
         .row-hover { background-color: #f0f8ff !important; }
 
@@ -128,11 +107,18 @@
         .time-cell { flex-shrink: 0; border-right: 1px solid #e8e8e8; font-size: 11px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #777; height: 100%; box-sizing: border-box; }
         .weekend { background-color: #fff0f0; color: #d00; }
         
-        /* 右側背景與 Bar */
-        .bars-container { position: relative; min-width: max-content; /* height 由 JS 動態設定 */ }
+        /* --- 關鍵修正：Bar 容器 --- */
+        .bars-container { 
+            position: relative; 
+            min-width: max-content; 
+            display: flex; /* 加入 Flex */
+            flex-direction: column; /* 強制垂直排列 */
+        }
+        
         .timeline-bg { position: absolute; top: 0; left: 0; height: 100%; width: 100%; z-index: 0; pointer-events: none; }
         .today-line { position: absolute; top: 0; bottom: 0; width: 2px; background-color: #ff4757; z-index: 25; pointer-events: none; }
 
+        /* 條狀圖：相對於 gantt-row 定位 */
         .gantt-bar { position: absolute; height: 18px; top: 9px; border-radius: 3px; box-shadow: 0 2px 4px rgba(0,0,0,0.15); z-index: 10; font-size: 10px; color: rgba(255,255,255,0.95); overflow: hidden; white-space: nowrap; display: flex; align-items: center; padding-left: 5px; }
         .summary-bar { position: absolute; height: 12px; top: 12px; background-color: #666; border-radius: 6px; z-index: 10; cursor: help; }
         .summary-bar::before, .summary-bar::after { content: ''; position: absolute; top: 100%; border: 4px solid transparent; border-top-color: #666; }
@@ -143,71 +129,46 @@
         .diff-高 { background-color: #e74c3c; }
 
         #customTooltip { position: fixed; display: none; background: #fff; border: 1px solid #ccc; box-shadow: 0 4px 15px rgba(0,0,0,0.2); padding: 10px; border-radius: 5px; z-index: 3000; font-size: 12px; color: #333; max-width: 300px; pointer-events: none; }
-        
         .loading { padding: 20px; color: #555; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <h2>專案管理甘特圖</h2>
+    <h2>專案管理甘特圖 V3</h2>
     
     <div class="controls-bar">
-        <button class="btn-primary" onclick="openCapacityModal()" style="margin-right: 20px;">⚙️ 人員產能設定</button>
+        <button class="btn-primary" onclick="openCapacityModal()" style="margin-right: 10px;">⚙️ 人員產能設定</button>
+        <button class="btn-danger" onclick="clearConfig()">↻ 重置設定</button>
 
-        <div style="font-weight:bold; font-size:13px; margin-right:5px;">視圖:</div>
+        <div style="font-weight:bold; font-size:13px; margin-left:20px; margin-right:5px;">視圖:</div>
         <div class="view-switcher">
             <button class="view-btn active" onclick="switchView('Day')">日</button>
             <button class="view-btn" onclick="switchView('Week')">週</button>
             <button class="view-btn" onclick="switchView('Month')">月</button>
         </div>
 
-        <!-- 篩選器 -->
-        <div style="display:flex; gap:10px;">
+        <div style="display:flex; gap:10px; margin-left: 15px;">
             <div class="custom-dropdown-wrapper">
                 <span class="filter-label">人員</span>
-                <div class="custom-dropdown" id="dd-owner">
-                    <button class="dropdown-btn">全部選取</button>
-                    <div class="dropdown-content"></div>
-                </div>
+                <div class="custom-dropdown" id="dd-owner"><button class="dropdown-btn">全部選取</button><div class="dropdown-content"></div></div>
             </div>
             <div class="custom-dropdown-wrapper">
                 <span class="filter-label">分類1</span>
-                <div class="custom-dropdown" id="dd-cat1">
-                    <button class="dropdown-btn">全部選取</button>
-                    <div class="dropdown-content"></div>
-                </div>
-            </div>
-            <div class="custom-dropdown-wrapper">
-                <span class="filter-label">分類2</span>
-                <div class="custom-dropdown" id="dd-cat2">
-                    <button class="dropdown-btn">全部選取</button>
-                    <div class="dropdown-content"></div>
-                </div>
-            </div>
-            <div class="custom-dropdown-wrapper">
-                <span class="filter-label">難易度</span>
-                <div class="custom-dropdown" id="dd-diff">
-                    <button class="dropdown-btn">全部選取</button>
-                    <div class="dropdown-content"></div>
-                </div>
+                <div class="custom-dropdown" id="dd-cat1"><button class="dropdown-btn">全部選取</button><div class="dropdown-content"></div></div>
             </div>
         </div>
 
         <div style="margin-left:auto; display:flex; align-items:center; font-size:12px;">
-            <div class="legend-color diff-低"></div>低
-            <div class="legend-color diff-中" style="margin-left:5px;"></div>中
-            <div class="legend-color diff-高" style="margin-left:5px;"></div>高
-            <div class="legend-color summary-bar" style="width:12px;height:12px;margin-left:5px;border-radius:2px;position:static;"></div>匯總
+            <div class="legend-color diff-低" style="width:12px;height:12px;border-radius:2px;margin-right:3px;"></div>低
+            <div class="legend-color diff-中" style="width:12px;height:12px;border-radius:2px;margin-right:3px;margin-left:10px;"></div>中
+            <div class="legend-color diff-高" style="width:12px;height:12px;border-radius:2px;margin-right:3px;margin-left:10px;"></div>高
             <span style="margin-left:10px; color:#ff4757; font-weight:bold;">| 今日</span>
         </div>
     </div>
 
     <div id="loading" class="loading">正在讀取並計算排程...</div>
 
-    <!-- 甘特圖主結構 -->
     <div class="gantt-wrapper" id="ganttApp" style="display:none;">
-        
-        <!-- 左側面板 -->
         <div class="panel-left">
             <div class="gantt-header-container">
                 <div class="left-header-content">
@@ -220,7 +181,6 @@
             </div>
         </div>
 
-        <!-- 右側面板 -->
         <div class="panel-right">
             <div class="gantt-header-container" id="rightHeader">
                 <div class="timeline-header" id="timelineHeader"></div>
@@ -231,10 +191,8 @@
                 </div>
             </div>
         </div>
-
     </div>
 
-    <!-- 產能設定 Modal -->
     <div class="modal-overlay" id="capacityModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -242,41 +200,21 @@
                 <button onclick="closeCapacityModal()" style="background:none; border:none; font-size:18px;">✕</button>
             </div>
             <div class="modal-body">
-                <div class="section-title">1. 基本設定 (開工日設定)</div>
-                <div style="padding:0;">
-                    <table class="cap-table">
-                        <thead><tr><th style="width:200px;">人員姓名</th><th>專案開工日期 (預設今天)</th></tr></thead>
-                        <tbody id="basicSettingBody"></tbody>
-                    </table>
-                </div>
-                <div class="section-title" style="margin-top:10px;">2. 產能例外管理 (未設定則預設為 100% 投入)</div>
-                <div style="flex:1; overflow-y:auto;">
-                    <table class="cap-table">
-                        <thead>
-                            <tr>
-                                <th style="width:40px; text-align:center;"><button class="btn-add-row" onclick="addCapacityRow()">+</button></th>
-                                <th style="width:150px;">人員</th>
-                                <th style="width:140px;">起日</th>
-                                <th style="width:140px;">迄日</th>
-                                <th style="width:90px;">投入 %</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody id="capacityTableBody"></tbody>
-                    </table>
-                </div>
+                <div class="section-title">1. 基本設定 (開工日)</div>
+                <div style="padding:0;"><table class="cap-table"><thead><tr><th style="width:200px;">人員姓名</th><th>專案開工日期</th></tr></thead><tbody id="basicSettingBody"></tbody></table></div>
+                <div class="section-title" style="margin-top:10px;">2. 產能例外 (請假/支援)</div>
+                <div style="flex:1; overflow-y:auto;"><table class="cap-table"><thead><tr><th style="width:40px;"><button class="btn-add-row" onclick="addCapacityRow()">+</button></th><th style="width:150px;">人員</th><th style="width:140px;">起日</th><th style="width:140px;">迄日</th><th style="width:90px;">投入 %</th><th></th></tr></thead><tbody id="capacityTableBody"></tbody></table></div>
             </div>
-            <div class="modal-footer">
-                <button class="btn-primary" onclick="saveCapacitySettings()">儲存並重新計算</button>
-            </div>
+            <div class="modal-footer"><button class="btn-primary" onclick="saveCapacitySettings()">儲存並計算</button></div>
         </div>
     </div>
-
     <div id="customTooltip"></div>
 
 <script>
+    // 使用你原本提供的 Google Sheet 連結
     const SHEET_TASKS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQMt2b5Lb70ThslYptMoDFsgcB5lTTo7GwPnx18MuZ1xo5vZUqK1705TfFM6vhC-ZHJc6JbIaLgJz01/pub?gid=1959210146&single=true&output=csv";
 
+    // --- 全域變數 ---
     let VIEW_MODE = 'Day';
     const PIXELS_PER_DAY = { 'Day': 30, 'Week': 7, 'Month': 2 };
 
@@ -287,8 +225,9 @@
     let GLOBAL_START = null;
     let GLOBAL_END = null;
     const COLLAPSED_STATE = new Set();
-    const SELECTED_FILTERS = { owner: new Set(), cat1: new Set(), cat2: new Set(), diff: new Set() };
+    const SELECTED_FILTERS = { owner: new Set(), cat1: new Set() };
 
+    // Config Storage
     let GANTT_CONFIG = JSON.parse(localStorage.getItem('gantt_config_v2')) || { startDates: {}, exceptions: {} };
 
     async function init() {
@@ -308,13 +247,13 @@
                     configChanged = true;
                 }
             });
-            if(!GANTT_CONFIG.exceptions) GANTT_CONFIG.exceptions = {};
             if(configChanged) localStorage.setItem('gantt_config_v2', JSON.stringify(GANTT_CONFIG));
 
             initFilters(RAW_TASKS_DATA);
             recalculateSchedule();
         } catch (e) {
             document.getElementById('loading').innerText = "讀取失敗: " + e.message;
+            console.error(e);
         }
         
         document.addEventListener('click', (e) => {
@@ -325,7 +264,8 @@
     }
 
     async function fetchData(url) {
-        const resp = await fetch(url);
+        // 加入時間戳記防止快取
+        const resp = await fetch(url + "&t=" + new Date().getTime());
         return parseCSV(await resp.text());
     }
 
@@ -335,13 +275,13 @@
         const headers = lines[0].split(',').map(h => h.trim());
         const result = [];
         for (let i = 1; i < lines.length; i++) {
+            // 處理CSV可能的空行或不完整
+            if(!lines[i].trim()) continue;
             let row = lines[i].split(','); 
             const obj = {};
             headers.forEach((h, idx) => obj[h] = row[idx] ? row[idx].trim() : "");
-            // 增加空白列過濾機制
-            if(obj[headers[0]] && obj[headers[0]].trim() !== "") {
-                result.push(obj);
-            }
+            // 確保有資料才加入
+            if(obj['任務名稱']) result.push(obj);
         }
         return result;
     }
@@ -408,13 +348,22 @@
         for (let owner in personTasks) {
             let tracker = getPersonStartDate(owner);
             while (tracker.getDay() === 0 || tracker.getDay() === 6) tracker.setDate(tracker.getDate() + 1);
+            
+            // 修正排序：使用新的 '個人執行順序'
             const myTasks = personTasks[owner].sort((a, b) => parseInt(a['個人執行順序']) - parseInt(b['個人執行順序']));
+            
             myTasks.forEach(task => {
                 const manDays = parseFloat(task['標準人天']) || 1;
                 const start = new Date(tracker);
                 const end = calculateTaskEndDate(start, manDays, owner);
+                
+                // 防呆：如果日期計算出錯 (NaN)，強制給當天
+                if (isNaN(start.getTime())) start = new Date();
+                if (isNaN(end.getTime())) end = new Date();
+
                 const taskObj = { ...task, _start: start, _end: end, _duration: manDays };
                 calculated.push(taskObj);
+                
                 if (start < minDate) minDate = new Date(start);
                 if (end > maxDate) maxDate = new Date(end);
                 hasAnyData = true;
@@ -424,6 +373,8 @@
 
         if (!hasAnyData) { GLOBAL_START = new Date(); GLOBAL_END = new Date(); } 
         else { GLOBAL_START = minDate; GLOBAL_END = maxDate; }
+        
+        // 修正排序：使用新的 '任務執行順序'
         calculated.sort((a, b) => parseInt(a['任務執行順序']) - parseInt(b['任務執行順序']));
         CALCULATED_TASKS = calculated;
         applyFiltersAndRender();
@@ -431,16 +382,12 @@
 
     // --- UI & 渲染 ---
     function initFilters(tasks) {
-        const sets = { cat1: new Set(), cat2: new Set(), diff: new Set() };
+        const sets = { cat1: new Set() };
         tasks.forEach(t => {
             if(t['任務分類1']) sets.cat1.add(t['任務分類1']);
-            if(t['任務分類2']) sets.cat2.add(t['任務分類2']);
-            if(t['難易度']) sets.diff.add(t['難易度']);
         });
         initCustomDropdown('dd-owner', new Set(ALL_OWNERS), 'owner');
         initCustomDropdown('dd-cat1', sets.cat1, 'cat1');
-        initCustomDropdown('dd-cat2', sets.cat2, 'cat2');
-        initCustomDropdown('dd-diff', sets.diff, 'diff');
     }
 
     function initCustomDropdown(elementId, dataSet, filterKey) {
@@ -476,8 +423,6 @@
         const filtered = CALCULATED_TASKS.filter(t => {
             if (!SELECTED_FILTERS.owner.has(t['人員姓名'])) return false;
             if (!SELECTED_FILTERS.cat1.has(t['任務分類1'])) return false;
-            if (!SELECTED_FILTERS.cat2.has(t['任務分類2'])) return false;
-            if (!SELECTED_FILTERS.diff.has(t['難易度'])) return false;
             return true;
         });
 
@@ -491,9 +436,9 @@
             updateTime(cat2Node, task); updateTime(cat1Node, task);
         });
 
-        // 清空
+        // Clear
         taskListEl.innerHTML = ''; headerEl.innerHTML = ''; barsContainerEl.innerHTML = ''; 
-        barsContainerEl.appendChild(bgEl); // 重建背景層
+        barsContainerEl.appendChild(bgEl); // Re-add bg
 
         const pxPerDay = PIXELS_PER_DAY[VIEW_MODE];
         let renderStart = new Date(GLOBAL_START); renderStart.setDate(renderStart.getDate() - 7);
@@ -504,7 +449,7 @@
         const totalWidth = totalDays * pxPerDay;
         barsContainerEl.style.width = `${totalWidth}px`; bgEl.style.width = `${totalWidth}px`;
 
-        // --- 渲染表頭 (Timeline Header) ---
+        // Render Header
         if (VIEW_MODE === 'Day') {
             bgEl.style.backgroundSize = `${pxPerDay}px 100%`; bgEl.style.backgroundImage = `linear-gradient(90deg, transparent ${pxPerDay-1}px, #eee ${pxPerDay}px)`;
             let curr = new Date(renderStart);
@@ -541,27 +486,22 @@
         const today = new Date(); const todayDiff = (today - renderStart) / (1000*60*60*24);
         if (todayDiff >= 0) { const line = document.createElement('div'); line.className = 'today-line'; line.style.left = `${todayDiff * pxPerDay}px`; barsContainerEl.appendChild(line); }
 
-        // --- 預先計算需要渲染的節點列表 (Flat List) 以便計算總高度 ---
         let visibleNodes = [];
         function flattenTree(nodes) {
             nodes.forEach(node => {
                 visibleNodes.push(node);
-                const isCollapsed = COLLAPSED_STATE.has(node.id);
-                if (node.type && !isCollapsed) {
+                if (node.type && !COLLAPSED_STATE.has(node.id)) {
                     flattenTree(node.children);
                 }
             });
         }
         flattenTree(tree);
 
-        // **關鍵修正：強制設定高度，撐開紅線與背景**
-        const totalRowHeight = visibleNodes.length * 36; // 36px per row
-        barsContainerEl.style.height = `${Math.max(totalRowHeight, 500)}px`; // 至少500px避免太醜
-        bgEl.style.height = '100%'; // 背景線跟隨容器
+        const totalRowHeight = visibleNodes.length * 36; 
+        barsContainerEl.style.height = `${Math.max(totalRowHeight, 500)}px`; 
+        bgEl.style.height = '100%';
 
-        // --- 開始渲染列 ---
         visibleNodes.forEach((node, rowIndex) => {
-            // 左側 Row
             const leftRow = document.createElement('div');
             leftRow.className = `gantt-row ${node.type==='cat1'?'row-group-1':node.type==='cat2'?'row-group-2':''}`;
             let indent = node.type === 'cat1' ? 10 : node.type === 'cat2' ? 30 : 50;
@@ -573,7 +513,6 @@
             }
             taskListEl.appendChild(leftRow);
 
-            // 右側 Row
             const rightRow = document.createElement('div'); 
             rightRow.className = 'gantt-row'; 
             rightRow.style.width = `${totalWidth}px`;
@@ -593,7 +532,6 @@
             }
             barsContainerEl.appendChild(rightRow);
 
-            // Hover Sync
             const syncHover = (add) => { const action = add?'add':'remove'; leftRow.classList[action]('row-hover'); rightRow.classList[action]('row-hover'); };
             leftRow.addEventListener('mouseenter', ()=>syncHover(true)); leftRow.addEventListener('mouseleave', ()=>syncHover(false));
             rightRow.addEventListener('mouseenter', ()=>syncHover(true)); rightRow.addEventListener('mouseleave', ()=>syncHover(false));
@@ -669,9 +607,14 @@
         localStorage.setItem('gantt_config_v2', JSON.stringify(GANTT_CONFIG));
         recalculateSchedule(); closeCapacityModal(); alert('設定已儲存並更新排程！');
     }
+    function clearConfig() {
+        if(confirm("確定要清除所有人員開工日與產能設定嗎？")) {
+            localStorage.removeItem('gantt_config_v2');
+            location.reload();
+        }
+    }
 
     init();
 </script>
 </body>
 </html>
-
